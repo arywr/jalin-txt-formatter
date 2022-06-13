@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "json2xls": "^0.1.2",
+    "moment": "^2.29.3",
+    "p3x-json2xls-worker-thread": "^2022.4.128"
+  }
+}
