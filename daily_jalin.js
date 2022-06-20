@@ -4,6 +4,8 @@ const json2xls = require("p3x-json2xls-worker-thread");
 const moment = require("moment");
 
 let DEFAULT_DAY_READ = 1;
+let transactions = [];
+let transactions_dispute = [];
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -14,7 +16,9 @@ const processNormalData = async (day, type) => {
   const DIR_PATHNAME = `download/${type.toLowerCase()}/`;
   const DIR_SOURCENAME = `upload/${type.toLowerCase()}/`;
 
-  const TODAY_DATE = moment().subtract(day, "days").format("YYMMDD");
+  const TODAY_DATE = moment()
+    .subtract(day - 1, "days")
+    .format("YYMMDD");
   const DOWNLOAD_FILENAME = `${DIR_PATHNAME}${type}_${TODAY_DATE}_FORMATTED.xlsx`;
   const UPLOAD_FILENAME = `QR_SETTLE_360004_000898_${TODAY_DATE}_${type}`;
   const SOURCE_UPLOAD = `${DIR_SOURCENAME}${UPLOAD_FILENAME}`;
@@ -118,18 +122,20 @@ const processNormalData = async (day, type) => {
           }
         });
 
-        const xlsBinary = await json2xls(data);
-        await fs.writeFileSync(
-          DOWNLOAD_FILENAME,
-          xlsBinary,
-          "binary",
-          (err) => {
-            if (err) {
-              console.log("writeFileSync error :", err);
-            }
-            console.log("The file has been saved!");
-          }
-        );
+        transactions = [...transactions, ...data];
+
+        // const xlsBinary = await json2xls(data);
+        // await fs.writeFileSync(
+        //   DOWNLOAD_FILENAME,
+        //   xlsBinary,
+        //   "binary",
+        //   (err) => {
+        //     if (err) {
+        //       console.log("writeFileSync error :", err);
+        //     }
+        //     console.log("The file has been saved!");
+        //   }
+        // );
       });
     } else {
       console.log(`Warning!! File tidak ditemukan: ${UPLOAD_FILENAME} \n \n`);
@@ -143,8 +149,10 @@ const processDisputeData = async (day, type) => {
   const DIR_PATHNAME = `download/${type.toLowerCase()}/`;
   const DIR_SOURCENAME = `upload/${type.toLowerCase()}/`;
 
-  const TODAY_DATE = moment().subtract(day, "days").format("YYMMDD");
-  const DOWNLOAD_FILENAME = `${DIR_PATHNAME}DISPUTE_${type}_${TODAY_DATE}_FORMATTED.xlsx`;
+  const TODAY_DATE = moment()
+    .subtract(day - 1, "days")
+    .format("YYMMDD");
+  // const DOWNLOAD_FILENAME = `${DIR_PATHNAME}DISPUTE_${type}_${TODAY_DATE}_FORMATTED.xlsx`;
   const UPLOAD_FILENAME = `QR_SETTLE_360004_000898_${TODAY_DATE}_${type}`;
   const SOURCE_UPLOAD = `${DIR_SOURCENAME}${UPLOAD_FILENAME}`;
 
@@ -202,7 +210,8 @@ const processDisputeData = async (day, type) => {
         });
 
         let data = [];
-        generatedRows.forEach((item, row_index) => {
+
+        generatedRows.forEach(async (item, row_index) => {
           let object = {};
 
           if (item !== null) {
@@ -257,18 +266,20 @@ const processDisputeData = async (day, type) => {
           }
         });
 
-        const xlsBinary = await json2xls(data);
-        await fs.writeFileSync(
-          DOWNLOAD_FILENAME,
-          xlsBinary,
-          "binary",
-          (err) => {
-            if (err) {
-              console.log("writeFileSync error :", err);
-            }
-            console.log("The file has been saved!");
-          }
-        );
+        transactions_dispute = [...transactions_dispute, ...data];
+
+        // const xlsBinary = await json2xls(data);
+        // await fs.writeFileSync(
+        //   DOWNLOAD_FILENAME,
+        //   xlsBinary,
+        //   "binary",
+        //   (err) => {
+        //     if (err) {
+        //       console.log("writeFileSync error :", err);
+        //     }
+        //     console.log("The file has been saved!");
+        //   }
+        // );
       });
     }
   } catch (error) {
@@ -276,21 +287,57 @@ const processDisputeData = async (day, type) => {
   }
 };
 
-const Main = () => {
-  rl.question("H- berapa transaksi yang mau dibaca: ", function (day) {
-    rl.question("ACQ or ISS: ", function (type) {
+const Main = async () => {
+  rl.question("H- berapa transaksi yang mau dibaca: ", async function (day) {
+    rl.question("ACQ or ISS: ", async function (type) {
       console.log("\n");
       if (day && type) {
         DEFAULT_DAY_READ = day;
 
         for (let index = DEFAULT_DAY_READ; index >= 1; index--) {
-          processNormalData(index, type.toUpperCase());
-          processDisputeData(index, type.toUpperCase());
+          await processNormalData(index, type.toUpperCase());
+          await processDisputeData(index, type.toUpperCase());
         }
+
+        setTimeout(async () => {
+          const DIR_PATHNAME = `download/${type.toLowerCase()}/`;
+          const DOWNLOAD_FILENAME_NORMAL = `${DIR_PATHNAME}JALIN_${type.toUpperCase()}_${moment().format(
+            "YYMMDD"
+          )}.xlsx`;
+          const DOWNLOAD_FILENAME_DISPUTE = `${DIR_PATHNAME}JALIN_DISPUTE_${type.toUpperCase()}_${moment().format(
+            "YYMMDD"
+          )}.xlsx`;
+
+          const xlsBinary = await json2xls(transactions);
+          const xlsBinary2 = await json2xls(transactions_dispute);
+
+          await fs.writeFileSync(
+            DOWNLOAD_FILENAME_NORMAL,
+            xlsBinary,
+            "binary",
+            (err) => {
+              if (err) {
+                console.log("writeFileSync error :", err);
+              }
+              console.log("The file has been saved!");
+            }
+          );
+
+          await fs.writeFileSync(
+            DOWNLOAD_FILENAME_DISPUTE,
+            xlsBinary2,
+            "binary",
+            (err) => {
+              if (err) {
+                console.log("writeFileSync error :", err);
+              }
+              console.log("The file has been saved!");
+            }
+          );
+        }, 5000);
       } else {
         console.log("TRY AGAIN!! \n");
       }
-
       rl.close();
     });
   });
