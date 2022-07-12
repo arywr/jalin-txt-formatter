@@ -12,6 +12,56 @@ const rl = readline.createInterface({
   output: process.stdout,
 });
 
+const splitMerchantInfo = (text) => {
+  if (!text) return "";
+
+  if (text && text.includes("KAB. ")) {
+    if (!text.split("KAB. ")[0] || !text.split("KAB. ")[1]) return text;
+
+    console.log("HAS KAB", text.split("KAB. ")[1]);
+
+    return {
+      name: text.split("KAB. ")[0],
+      location: `KAB. ${text.split("KAB. ")[1]}`,
+    };
+  }
+
+  if (text && text.includes("KOTA ")) {
+    if (!text.split("KOTA ")[0] || !text.split("KOTA ")[1]) return text;
+
+    console.log("HAS KOTA", text.split("KOTA ")[1]);
+
+    return {
+      name: text.split("KOTA ")[0],
+      location: `KOTA ${text.split("KOTA ")[1]}`,
+    };
+  }
+
+  if (text && text.includes("Gereja bethany indonesia")) {
+    return {
+      name: "Gereja bethany indonesia",
+      location: text.split("Gereja bethany indonesia ")[1],
+    };
+  }
+
+  if (text && text.includes("Ayam Rica Rica Mas Bagus")) {
+    return {
+      name: "Ayam Rica Rica Mas Bagus Padang",
+      location: text.split("Ayam Rica Rica Mas Bagus ")[1],
+    };
+  }
+
+  return text;
+};
+
+const populateMerchant = (text, check) => {
+  if (text.hasOwnProperty(check)) {
+    return text[check];
+  }
+
+  return text;
+};
+
 const processNormalData = async (day, type) => {
   const DIR_PATHNAME = `download/${type.toLowerCase()}/`;
   const DIR_SOURCENAME = `upload/${type.toLowerCase()}/`;
@@ -84,7 +134,11 @@ const processNormalData = async (day, type) => {
           if (item !== null) {
             object["No."] = item[0]?.split(" ")[0] || "";
             object["Trx_Code"] = item[0]?.split(" ")[1] || "";
-            object["Tanggal_Trx"] = item[1]?.trim() || "";
+            object["Tanggal_Trx"] =
+              `2022-${item[1]?.trim()?.split("/")[1]}-${
+                item[1]?.trim()?.split("/")[0]
+              }` || "";
+
             object["Jam_Trx"] = item[2]?.split(" ")[0] || "";
             object["Ref_No"] = item[2]?.split(" ")[1] || "";
 
@@ -94,12 +148,50 @@ const processNormalData = async (day, type) => {
               object["Acquirer"] = item[3]?.split(" ")[1] || "";
               object["Issuer"] = item[4] || "";
               object["Customer_PAN"] = item[5] || "";
-              object["Nominal"] = item[6]?.split(" ")[0] || "";
+              object["Nominal"] =
+                parseFloat(item[6]?.split(" ")[0]?.replace(/,/g, "")) || "";
               object["Merchant_Category"] = item[6]?.split(" ")[1] || "";
               object["Merchant_Criteria"] = item[7] || "";
               object["Response_Code"] = item[8] || "";
-              object["Merchant_Name"] = item[9] || "";
-              object["Merchant_Location"] = item[10] || "";
+
+              let merchant = "";
+
+              for (let i = 10; i < item.length - 2; i++) {
+                if (i == item.length - 3) {
+                  merchant += `${item[i]}`;
+                } else {
+                  merchant += `${item[i]} `;
+                }
+              }
+
+              object["Merchant_Name_&_Location"] =
+                merchant.split(" ").join("_") || "";
+              object["Convenience_Fee"] = item[item.length - 2] || "";
+              object["Interchange_Fee"] = item[item.length - 1] || "";
+            } else if (item[3]?.split(" ")?.length === 3) {
+              object["Terminal_ID"] = item[3]?.split(" ")[0] || "";
+              object["Merchant_PAN"] = item[3]?.split(" ")[1] || "";
+              object["Acquirer"] = item[3]?.split(" ")[0] || "";
+              object["Issuer"] = item[4] || "";
+              object["Customer_PAN"] = item[5] || "";
+              object["Nominal"] =
+                parseFloat(item[6]?.split(" ")[0]?.replace(/,/g, "")) || "";
+              object["Merchant_Category"] = item[6]?.split(" ")[1] || "";
+              object["Merchant_Criteria"] = item[7] || "";
+              object["Response_Code"] = item[8] || "";
+
+              let merchant = "";
+
+              for (let i = 10; i < item.length - 2; i++) {
+                if (i == item.length - 3) {
+                  merchant += `${item[i]}`;
+                } else {
+                  merchant += `${item[i]} `;
+                }
+              }
+
+              object["Merchant_Name_&_Location"] =
+                merchant.split(" ").join("_") || "";
               object["Convenience_Fee"] = item[item.length - 2] || "";
               object["Interchange_Fee"] = item[item.length - 1] || "";
             } else {
@@ -108,12 +200,24 @@ const processNormalData = async (day, type) => {
               object["Acquirer"] = item[4]?.split(" ")[1] || "";
               object["Issuer"] = item[5] || "";
               object["Customer_PAN"] = item[6] || "";
-              object["Nominal"] = item[7]?.split(" ")[0] || "";
+              object["Nominal"] =
+                parseFloat(item[7]?.split(" ")[0]?.replace(/,/g, "")) || "";
               object["Merchant_Category"] = item[7]?.split(" ")[1] || "";
               object["Merchant_Criteria"] = item[8] || "";
               object["Response_Code"] = item[9] || "";
-              object["Merchant_Name"] = item[10] || "";
-              object["Merchant_Location"] = item[11] || "";
+
+              let merchant = "";
+
+              for (let i = 10; i < item.length - 2; i++) {
+                if (i == item.length - 3) {
+                  merchant += `${item[i]}`;
+                } else {
+                  merchant += `${item[i]} `;
+                }
+              }
+
+              object["Merchant_Name_&_Location"] =
+                merchant.split(" ").join("_") || "";
               object["Convenience_Fee"] = item[item.length - 2] || "";
               object["Interchange_Fee"] = item[item.length - 1] || "";
             }
@@ -215,9 +319,14 @@ const processDisputeData = async (day, type) => {
           let object = {};
 
           if (item !== null) {
+            if (item[0].includes("--------------------------")) return;
+
             object["No."] = item[0] || "";
             object["Trx_Code"] = item[1] || "";
-            object["Tanggal_Trx"] = item[2] || "";
+            object["Tanggal_Trx"] =
+              `2022-${item[2]?.trim()?.split("/")[2]}-${
+                item[2]?.trim()?.split("/")[0]
+              }` || "";
             object["Jam_Trx"] = item[3]?.split(" ")[0] || "";
             object["Ref_No"] = item[3]?.split(" ")[1] || "";
             object["Trace_No"] = item[3]?.split(" ")[2] || "";
@@ -228,12 +337,25 @@ const processDisputeData = async (day, type) => {
               object["Acquirer"] = item[4]?.split(" ")[1] || "";
               object["Issuer"] = item[5] || "";
               object["Customer_PAN"] = item[6] || "";
-              object["Nominal"] = item[7]?.split(" ")[0] || "";
+              object["Nominal"] =
+                // item[7]?.split(" ")[0]?.replace(",", "") || "";
+                parseFloat(item[7]?.split(" ")[0]?.replace(/,/g, "")) || "";
               object["Merchant_Category"] = item[7]?.split(" ")[1] || "";
               object["Merchant_Criteria"] = item[8] || "";
               object["Response_Code"] = item[9] || "";
-              object["Merchant_Name"] = item[10] || "";
-              object["Merchant_Location"] = item[11] || "";
+
+              let merchant = "";
+
+              for (let i = 10; i < item.length - 7; i++) {
+                if (i == item.length - 8) {
+                  merchant += `${item[i]}`;
+                } else {
+                  merchant += `${item[i]} `;
+                }
+              }
+
+              object["Merchant_Name_&_Location"] =
+                merchant.split(" ").join("_") || "";
               object["Convenience_Fee"] = item[item.length - 7] || "";
               object["Interchange_Fee"] = item[item.length - 6] || "";
               object["Dispute_Tran_Code"] = item[item.length - 5] || "";
@@ -247,12 +369,23 @@ const processDisputeData = async (day, type) => {
               object["Acquirer"] = item[5]?.split(" ")[1] || "";
               object["Issuer"] = item[6] || "";
               object["Customer_PAN"] = item[7] || "";
-              object["Nominal"] = item[8]?.split(" ")[0] || "";
+              object["Nominal"] =
+                parseFloat(item[8]?.split(" ")[0]?.replace(/,/g, "")) || "";
               object["Merchant_Category"] = item[8]?.split(" ")[1] || "";
               object["Merchant_Criteria"] = item[9] || "";
               object["Response_Code"] = item[10] || "";
-              object["Merchant_Name"] = item[11] || "";
-              object["Merchant_Location"] = item[12] || "";
+              let merchant = "";
+
+              for (let i = 10; i < item.length - 7; i++) {
+                if (i == item.length - 8) {
+                  merchant += `${item[i]}`;
+                } else {
+                  merchant += `${item[i]} `;
+                }
+              }
+
+              object["Merchant_Name_&_Location"] =
+                merchant.split(" ").join("_") || "";
               object["Convenience_Fee"] = item[item.length - 7] || "";
               object["Interchange_Fee"] = item[item.length - 6] || "";
               object["Dispute_Tran_Code"] = item[item.length - 5] || "";
@@ -308,32 +441,36 @@ const Main = async () => {
             "YYMMDD"
           )}.xlsx`;
 
-          const xlsBinary = await json2xls(transactions);
-          const xlsBinary2 = await json2xls(transactions_dispute);
-
-          await fs.writeFileSync(
-            DOWNLOAD_FILENAME_NORMAL,
-            xlsBinary,
-            "binary",
-            (err) => {
-              if (err) {
-                console.log("writeFileSync error :", err);
+          if (transactions && transactions.length !== 0) {
+            const xlsBinary = await json2xls(transactions);
+            await fs.writeFileSync(
+              DOWNLOAD_FILENAME_NORMAL,
+              xlsBinary,
+              "binary",
+              (err) => {
+                if (err) {
+                  console.log("writeFileSync error :", err);
+                }
+                console.log("The file has been saved!");
               }
-              console.log("The file has been saved!");
-            }
-          );
+            );
+          }
 
-          await fs.writeFileSync(
-            DOWNLOAD_FILENAME_DISPUTE,
-            xlsBinary2,
-            "binary",
-            (err) => {
-              if (err) {
-                console.log("writeFileSync error :", err);
+          if (transactions_dispute && transactions_dispute.length !== 0) {
+            const xlsBinary2 = await json2xls(transactions_dispute);
+
+            await fs.writeFileSync(
+              DOWNLOAD_FILENAME_DISPUTE,
+              xlsBinary2,
+              "binary",
+              (err) => {
+                if (err) {
+                  console.log("writeFileSync error :", err);
+                }
+                console.log("The file has been saved!");
               }
-              console.log("The file has been saved!");
-            }
-          );
+            );
+          }
         }, 5000);
       } else {
         console.log("TRY AGAIN!! \n");
