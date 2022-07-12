@@ -12,56 +12,6 @@ const rl = readline.createInterface({
   output: process.stdout,
 });
 
-const splitMerchantInfo = (text) => {
-  if (!text) return "";
-
-  if (text && text.includes("KAB. ")) {
-    if (!text.split("KAB. ")[0] || !text.split("KAB. ")[1]) return text;
-
-    console.log("HAS KAB", text.split("KAB. ")[1]);
-
-    return {
-      name: text.split("KAB. ")[0],
-      location: `KAB. ${text.split("KAB. ")[1]}`,
-    };
-  }
-
-  if (text && text.includes("KOTA ")) {
-    if (!text.split("KOTA ")[0] || !text.split("KOTA ")[1]) return text;
-
-    console.log("HAS KOTA", text.split("KOTA ")[1]);
-
-    return {
-      name: text.split("KOTA ")[0],
-      location: `KOTA ${text.split("KOTA ")[1]}`,
-    };
-  }
-
-  if (text && text.includes("Gereja bethany indonesia")) {
-    return {
-      name: "Gereja bethany indonesia",
-      location: text.split("Gereja bethany indonesia ")[1],
-    };
-  }
-
-  if (text && text.includes("Ayam Rica Rica Mas Bagus")) {
-    return {
-      name: "Ayam Rica Rica Mas Bagus Padang",
-      location: text.split("Ayam Rica Rica Mas Bagus ")[1],
-    };
-  }
-
-  return text;
-};
-
-const populateMerchant = (text, check) => {
-  if (text.hasOwnProperty(check)) {
-    return text[check];
-  }
-
-  return text;
-};
-
 const processNormalData = async (day, type) => {
   const DIR_PATHNAME = `download/${type.toLowerCase()}/`;
   const DIR_SOURCENAME = `upload/${type.toLowerCase()}/`;
