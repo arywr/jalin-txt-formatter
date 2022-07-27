@@ -91,6 +91,7 @@ const processNormalData = async (day, type) => {
 
             object["Jam_Trx"] = item[2]?.split(" ")[0] || "";
             object["Ref_No"] = item[2]?.split(" ")[1] || "";
+            object["Trace_No"] = item[2]?.split(" ")[2] || "";
 
             if (item[3]?.split(" ")?.length === 2) {
               object["Terminal_ID"] = "";
@@ -274,9 +275,10 @@ const processDisputeData = async (day, type) => {
             object["No."] = item[0] || "";
             object["Trx_Code"] = item[1] || "";
             object["Tanggal_Trx"] =
-              `2022-${item[2]?.trim()?.split("/")[2]}-${
+              `2022-${item[2]?.trim()?.split("/")[1]}-${
                 item[2]?.trim()?.split("/")[0]
               }` || "";
+
             object["Jam_Trx"] = item[3]?.split(" ")[0] || "";
             object["Ref_No"] = item[3]?.split(" ")[1] || "";
             object["Trace_No"] = item[3]?.split(" ")[2] || "";
