@@ -1,11 +1,19 @@
 const fs = require("fs");
 const readline = require("readline");
-const json2xls = require("p3x-json2xls-worker-thread");
 const moment = require("moment");
+const xlsx = require("xlsx");
 
 let DEFAULT_DAY_READ = 1;
-let transactions = [];
-let transactions_dispute = [];
+let trx = {
+  acq: {
+    normal: [],
+    dispute: [],
+  },
+  iss: {
+    normal: [],
+    dispute: [],
+  },
+};
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -117,7 +125,8 @@ const processNormalData = async (day, type) => {
 
               object["Merchant_Name_&_Location"] =
                 merchant.split(" ").join("_") || "";
-              object["Convenience_Fee"] = item[item.length - 2] || "";
+              object["Convenience_Fee"] =
+                item[item.length - 2]?.replace("C", "") || "";
               object["Interchange_Fee"] = item[item.length - 1] || "";
             } else if (item[3]?.split(" ")?.length === 3) {
               object["Terminal_ID"] = item[3]?.split(" ")[0] || "";
@@ -143,7 +152,38 @@ const processNormalData = async (day, type) => {
 
               object["Merchant_Name_&_Location"] =
                 merchant.split(" ").join("_") || "";
-              object["Convenience_Fee"] = item[item.length - 2] || "";
+              object["Convenience_Fee"] =
+                item[item.length - 2]?.replace("C", "") || "";
+              object["Interchange_Fee"] = item[item.length - 1] || "";
+            } else if (
+              item[3]?.split(" ")?.length === 1 &&
+              item[4]?.split(" ")?.length === 1
+            ) {
+              object["Terminal_ID"] = item[3];
+              object["Merchant_PAN"] = item[4];
+              object["Acquirer"] = item[5];
+              object["Issuer"] = item[6];
+              object["Customer_PAN"] = item[7];
+              object["Nominal"] =
+                parseFloat(item[8]?.split(" ")[0]?.replace(/,/g, "")) || "";
+              object["Merchant_Category"] = item[8]?.split(" ")[1] || "";
+              object["Merchant_Criteria"] = item[9];
+              object["Response_Code"] = item[10];
+
+              let merchant = "";
+
+              for (let i = 11; i < item.length - 2; i++) {
+                if (i == item.length - 3) {
+                  merchant += `${item[i]}`;
+                } else {
+                  merchant += `${item[i]} `;
+                }
+              }
+
+              object["Merchant_Name_&_Location"] =
+                merchant.split(" ").join("_") || "";
+              object["Convenience_Fee"] =
+                item[item.length - 2]?.replace("C", "") || "";
               object["Interchange_Fee"] = item[item.length - 1] || "";
             } else {
               object["Terminal_ID"] = item[3]?.trim() || "";
@@ -169,28 +209,27 @@ const processNormalData = async (day, type) => {
 
               object["Merchant_Name_&_Location"] =
                 merchant.split(" ").join("_") || "";
-              object["Convenience_Fee"] = item[item.length - 2] || "";
+              object["Convenience_Fee"] =
+                item[item.length - 2]?.replace("C", "") || "";
               object["Interchange_Fee"] = item[item.length - 1] || "";
             }
 
+            object[
+              "Combined_Key_Recon"
+            ] = `${object["Ref_No"]}_${object["Customer_PAN"]}_${object["Nominal"]}`;
+
+            object["Report_Date"] = TODAY_DATE;
             data.push(object);
           }
         });
 
-        transactions = [...transactions, ...data];
-
-        // const xlsBinary = await json2xls(data);
-        // await fs.writeFileSync(
-        //   DOWNLOAD_FILENAME,
-        //   xlsBinary,
-        //   "binary",
-        //   (err) => {
-        //     if (err) {
-        //       console.log("writeFileSync error :", err);
-        //     }
-        //     console.log("The file has been saved!");
-        //   }
-        // );
+        trx = {
+          ...trx,
+          [type.toLowerCase()]: {
+            ...trx[type.toLowerCase()],
+            normal: [...trx[type.toLowerCase()].normal, ...data],
+          },
+        };
       });
     } else {
       console.log(`Warning!! File tidak ditemukan: ${UPLOAD_FILENAME} \n \n`);
@@ -308,7 +347,43 @@ const processDisputeData = async (day, type) => {
 
               object["Merchant_Name_&_Location"] =
                 merchant.split(" ").join("_") || "";
-              object["Convenience_Fee"] = item[item.length - 7] || "";
+              object["Convenience_Fee"] =
+                item[item.length - 7]?.replace("C", "") || "";
+              object["Interchange_Fee"] = item[item.length - 6] || "";
+              object["Dispute_Tran_Code"] = item[item.length - 5] || "";
+              object["Dispute_Amount"] = item[item.length - 4] || "";
+              object["Fee_Return"] = item[item.length - 3] || "";
+              object["Dispute_Net_Amount"] = item[item.length - 2] || "";
+              object["Registration_Number"] = item[item.length - 1] || "";
+            } else if (
+              item[3]?.split(" ")?.length === 1 &&
+              item[4]?.split(" ")?.length === 1
+            ) {
+              object["Terminal_ID"] = item[3];
+              object["Merchant_PAN"] = item[4];
+              object["Acquirer"] = item[5];
+              object["Issuer"] = item[6];
+              object["Customer_PAN"] = item[7];
+              object["Nominal"] =
+                parseFloat(item[8]?.split(" ")[0]?.replace(/,/g, "")) || "";
+              object["Merchant_Category"] = item[8]?.split(" ")[1] || "";
+              object["Merchant_Criteria"] = item[9];
+              object["Response_Code"] = item[10];
+
+              let merchant = "";
+
+              for (let i = 11; i < item.length - 2; i++) {
+                if (i == item.length - 3) {
+                  merchant += `${item[i]}`;
+                } else {
+                  merchant += `${item[i]} `;
+                }
+              }
+
+              object["Merchant_Name_&_Location"] =
+                merchant.split(" ").join("_") || "";
+              object["Convenience_Fee"] =
+                item[item.length - 7]?.replace("C", "") || "";
               object["Interchange_Fee"] = item[item.length - 6] || "";
               object["Dispute_Tran_Code"] = item[item.length - 5] || "";
               object["Dispute_Amount"] = item[item.length - 4] || "";
@@ -338,7 +413,8 @@ const processDisputeData = async (day, type) => {
 
               object["Merchant_Name_&_Location"] =
                 merchant.split(" ").join("_") || "";
-              object["Convenience_Fee"] = item[item.length - 7] || "";
+              object["Convenience_Fee"] =
+                item[item.length - 7]?.replace("C", "") || "";
               object["Interchange_Fee"] = item[item.length - 6] || "";
               object["Dispute_Tran_Code"] = item[item.length - 5] || "";
               object["Dispute_Amount"] = item[item.length - 4] || "";
@@ -347,24 +423,18 @@ const processDisputeData = async (day, type) => {
               object["Registration_Number"] = item[item.length - 1] || "";
             }
 
+            object["Report_Date"] = TODAY_DATE;
             data.push(object);
           }
         });
 
-        transactions_dispute = [...transactions_dispute, ...data];
-
-        // const xlsBinary = await json2xls(data);
-        // await fs.writeFileSync(
-        //   DOWNLOAD_FILENAME,
-        //   xlsBinary,
-        //   "binary",
-        //   (err) => {
-        //     if (err) {
-        //       console.log("writeFileSync error :", err);
-        //     }
-        //     console.log("The file has been saved!");
-        //   }
-        // );
+        trx = {
+          ...trx,
+          [type.toLowerCase()]: {
+            ...trx[type.toLowerCase()],
+            dispute: [...trx[type.toLowerCase()].dispute, ...data],
+          },
+        };
       });
     }
   } catch (error) {
@@ -374,61 +444,66 @@ const processDisputeData = async (day, type) => {
 
 const Main = async () => {
   rl.question("H- berapa transaksi yang mau dibaca: ", async function (day) {
-    rl.question("ACQ or ISS: ", async function (type) {
-      console.log("\n");
-      if (day && type) {
-        DEFAULT_DAY_READ = day;
+    console.log("\n");
+    if (day) {
+      DEFAULT_DAY_READ = day;
 
-        for (let index = DEFAULT_DAY_READ; index >= 1; index--) {
-          await processNormalData(index, type.toUpperCase());
-          await processDisputeData(index, type.toUpperCase());
+      for (let index = DEFAULT_DAY_READ; index >= 1; index--) {
+        await processNormalData(index, "ACQ");
+        await processDisputeData(index, "ACQ");
+
+        await processNormalData(index, "ISS");
+        await processDisputeData(index, "ISS");
+      }
+
+      setTimeout(async () => {
+        var wb = xlsx.utils.book_new();
+
+        var ws_acq_normal = null;
+        var ws_acq_dispute = null;
+        var ws_iss_normal = null;
+        var ws_iss_dispute = null;
+
+        if (trx?.acq?.normal?.length) {
+          var ws_acq_normal = xlsx.utils.json_to_sheet(trx?.acq?.normal);
         }
 
-        setTimeout(async () => {
-          const DIR_PATHNAME = `download/${type.toLowerCase()}/`;
-          const DOWNLOAD_FILENAME_NORMAL = `${DIR_PATHNAME}JALIN_${type.toUpperCase()}_${moment().format(
-            "YYMMDD"
-          )}.xlsx`;
-          const DOWNLOAD_FILENAME_DISPUTE = `${DIR_PATHNAME}JALIN_DISPUTE_${type.toUpperCase()}_${moment().format(
-            "YYMMDD"
-          )}.xlsx`;
+        if (trx?.acq?.dispute?.length) {
+          var ws_acq_dispute = xlsx.utils.json_to_sheet(trx?.acq?.normal);
+        }
 
-          if (transactions && transactions.length !== 0) {
-            const xlsBinary = await json2xls(transactions);
-            await fs.writeFileSync(
-              DOWNLOAD_FILENAME_NORMAL,
-              xlsBinary,
-              "binary",
-              (err) => {
-                if (err) {
-                  console.log("writeFileSync error :", err);
-                }
-                console.log("The file has been saved!");
-              }
-            );
-          }
+        if (trx?.iss?.normal?.length) {
+          var ws_iss_normal = xlsx.utils.json_to_sheet(trx?.iss?.normal);
+        }
 
-          if (transactions_dispute && transactions_dispute.length !== 0) {
-            const xlsBinary2 = await json2xls(transactions_dispute);
+        if (trx?.iss?.dispute?.length) {
+          var ws_iss_dispute = xlsx.utils.json_to_sheet(trx?.iss?.normal);
+        }
 
-            await fs.writeFileSync(
-              DOWNLOAD_FILENAME_DISPUTE,
-              xlsBinary2,
-              "binary",
-              (err) => {
-                if (err) {
-                  console.log("writeFileSync error :", err);
-                }
-                console.log("The file has been saved!");
-              }
-            );
-          }
-        }, 5000);
-      } else {
-        console.log("TRY AGAIN!! \n");
-      }
-      rl.close();
-    });
+        if (ws_acq_normal !== null) {
+          await xlsx.utils.book_append_sheet(wb, ws_acq_normal, "ACQ");
+        }
+
+        if (ws_acq_dispute !== null) {
+          await xlsx.utils.book_append_sheet(wb, ws_acq_dispute, "DISPUTE ACQ");
+        }
+
+        if (ws_iss_normal !== null) {
+          await xlsx.utils.book_append_sheet(wb, ws_iss_normal, "ISS");
+        }
+
+        if (ws_iss_dispute !== null) {
+          await xlsx.utils.book_append_sheet(wb, ws_iss_dispute, "DISPUTE ISS");
+        }
+
+        const filename = `download/jalin_${moment().format("YYMMDD")}.xlsx`;
+
+        await xlsx.writeFile(wb, filename);
+      }, 5000);
+    } else {
+      console.log("TRY AGAIN!! \n");
+    }
+    rl.close();
   });
 };
 
