@@ -21,22 +21,17 @@ const rl = readline.createInterface({
 });
 
 const processNormalData = async (day, type) => {
-  const DIR_PATHNAME = `download/${type.toLowerCase()}/`;
-  const DIR_SOURCENAME = `upload/${type.toLowerCase()}/`;
-
   const TODAY_DATE = moment()
     .subtract(day - 1, "days")
     .format("YYMMDD");
-  const DOWNLOAD_FILENAME = `${DIR_PATHNAME}${type}_${TODAY_DATE}_FORMATTED.xlsx`;
   const UPLOAD_FILENAME = `QR_SETTLE_360004_000898_${TODAY_DATE}_${type}`;
-  const SOURCE_UPLOAD = `${DIR_SOURCENAME}${UPLOAD_FILENAME}`;
 
   let store = [];
   let realRows = [];
 
   try {
-    if (fs.existsSync(SOURCE_UPLOAD)) {
-      const fileStream = fs.createReadStream(SOURCE_UPLOAD);
+    if (fs.existsSync(UPLOAD_FILENAME)) {
+      const fileStream = fs.createReadStream(UPLOAD_FILENAME);
 
       const rl = readline.createInterface({
         input: fileStream,
@@ -240,22 +235,17 @@ const processNormalData = async (day, type) => {
 };
 
 const processDisputeData = async (day, type) => {
-  const DIR_PATHNAME = `download/${type.toLowerCase()}/`;
-  const DIR_SOURCENAME = `upload/${type.toLowerCase()}/`;
-
   const TODAY_DATE = moment()
     .subtract(day - 1, "days")
     .format("YYMMDD");
-  // const DOWNLOAD_FILENAME = `${DIR_PATHNAME}DISPUTE_${type}_${TODAY_DATE}_FORMATTED.xlsx`;
   const UPLOAD_FILENAME = `QR_SETTLE_360004_000898_${TODAY_DATE}_${type}`;
-  const SOURCE_UPLOAD = `${DIR_SOURCENAME}${UPLOAD_FILENAME}`;
 
   let store = [];
   let realRows = [];
 
   try {
-    if (fs.existsSync(SOURCE_UPLOAD)) {
-      const fileStream = fs.createReadStream(SOURCE_UPLOAD);
+    if (fs.existsSync(UPLOAD_FILENAME)) {
+      const fileStream = fs.createReadStream(UPLOAD_FILENAME);
 
       const rl = readline.createInterface({
         input: fileStream,
@@ -481,19 +471,19 @@ const Main = async () => {
         }
 
         if (ws_acq_normal !== null) {
-          await xlsx.utils.book_append_sheet(wb, ws_acq_normal, "ACQ");
+          xlsx.utils.book_append_sheet(wb, ws_acq_normal, "ACQ");
         }
 
         if (ws_acq_dispute !== null) {
-          await xlsx.utils.book_append_sheet(wb, ws_acq_dispute, "DISPUTE ACQ");
+          xlsx.utils.book_append_sheet(wb, ws_acq_dispute, "DISPUTE ACQ");
         }
 
         if (ws_iss_normal !== null) {
-          await xlsx.utils.book_append_sheet(wb, ws_iss_normal, "ISS");
+          xlsx.utils.book_append_sheet(wb, ws_iss_normal, "ISS");
         }
 
         if (ws_iss_dispute !== null) {
-          await xlsx.utils.book_append_sheet(wb, ws_iss_dispute, "DISPUTE ISS");
+          xlsx.utils.book_append_sheet(wb, ws_iss_dispute, "DISPUTE ISS");
         }
 
         const filename = `download/jalin_${moment().format("YYMMDD")}.xlsx`;
