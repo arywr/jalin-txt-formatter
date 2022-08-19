@@ -25,13 +25,14 @@ const processNormalData = async (day, type) => {
     .subtract(day - 1, "days")
     .format("YYMMDD");
   const UPLOAD_FILENAME = `QR_SETTLE_360004_000898_${TODAY_DATE}_${type}`;
+  const SOURCE_FILENAME = `upload/${UPLOAD_FILENAME}`;
 
   let store = [];
   let realRows = [];
 
   try {
-    if (fs.existsSync(UPLOAD_FILENAME)) {
-      const fileStream = fs.createReadStream(UPLOAD_FILENAME);
+    if (fs.existsSync(SOURCE_FILENAME)) {
+      const fileStream = fs.createReadStream(SOURCE_FILENAME);
 
       const rl = readline.createInterface({
         input: fileStream,
@@ -81,7 +82,7 @@ const processNormalData = async (day, type) => {
         });
 
         let data = [];
-        generatedRows.forEach((item, row_index) => {
+        generatedRows.forEach((item) => {
           let object = {};
 
           if (item !== null) {
@@ -210,7 +211,7 @@ const processNormalData = async (day, type) => {
             }
 
             object[
-              "Combined_Key_Recon"
+              "Jalin_Unique_Code"
             ] = `${object["Ref_No"]}_${object["Customer_PAN"]}_${object["Nominal"]}`;
 
             object["Report_Date"] = TODAY_DATE;
@@ -239,13 +240,14 @@ const processDisputeData = async (day, type) => {
     .subtract(day - 1, "days")
     .format("YYMMDD");
   const UPLOAD_FILENAME = `QR_SETTLE_360004_000898_${TODAY_DATE}_${type}`;
+  const SOURCE_FILENAME = `upload/${UPLOAD_FILENAME}`;
 
   let store = [];
   let realRows = [];
 
   try {
-    if (fs.existsSync(UPLOAD_FILENAME)) {
-      const fileStream = fs.createReadStream(UPLOAD_FILENAME);
+    if (fs.existsSync(SOURCE_FILENAME)) {
+      const fileStream = fs.createReadStream(SOURCE_FILENAME);
 
       const rl = readline.createInterface({
         input: fileStream,
@@ -295,7 +297,7 @@ const processDisputeData = async (day, type) => {
 
         let data = [];
 
-        generatedRows.forEach(async (item, row_index) => {
+        generatedRows.forEach(async (item) => {
           let object = {};
 
           if (item !== null) {
@@ -413,6 +415,9 @@ const processDisputeData = async (day, type) => {
               object["Registration_Number"] = item[item.length - 1] || "";
             }
 
+            object[
+              "Jalin_Unique_Code"
+            ] = `${object["Ref_No"]}_${object["Customer_PAN"]}_${object["Nominal"]}`;
             object["Report_Date"] = TODAY_DATE;
             data.push(object);
           }
