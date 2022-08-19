@@ -469,7 +469,7 @@ const Main = async () => {
         }
 
         if (trx?.acq?.dispute?.length) {
-          var ws_acq_dispute = xlsx.utils.json_to_sheet(trx?.acq?.normal);
+          var ws_acq_dispute = xlsx.utils.json_to_sheet(trx?.acq?.dispute);
         }
 
         if (trx?.iss?.normal?.length) {
@@ -477,7 +477,7 @@ const Main = async () => {
         }
 
         if (trx?.iss?.dispute?.length) {
-          var ws_iss_dispute = xlsx.utils.json_to_sheet(trx?.iss?.normal);
+          var ws_iss_dispute = xlsx.utils.json_to_sheet(trx?.iss?.dispute);
         }
 
         if (ws_acq_normal !== null) {
