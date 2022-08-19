@@ -265,6 +265,7 @@ const processDisputeData = async (day, type) => {
         store.forEach((item, index, array) => {
           if (item.includes("Dispute_Tran_Code") && hasColumn === false) {
             column = item.split(" ").filter(Boolean);
+            hasColumn = true;
           }
 
           if (
