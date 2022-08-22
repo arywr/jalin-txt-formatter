@@ -24,8 +24,8 @@ const processNormalData = async (day, type) => {
   const TODAY_DATE = moment()
     .subtract(day - 1, "days")
     .format("YYMMDD");
-  const UPLOAD_FILENAME = `QR_SETTLE_360004_000898_${TODAY_DATE}_${type}`;
-  const SOURCE_FILENAME = `upload/${UPLOAD_FILENAME}`;
+  let UPLOAD_FILENAME = `QR_SETTLE_360004_000898_${TODAY_DATE}_${type}`;
+  let SOURCE_FILENAME = `upload/${UPLOAD_FILENAME}`;
 
   let store = [];
   let realRows = [];
@@ -72,7 +72,7 @@ const processNormalData = async (day, type) => {
           }
         });
 
-        column = column.map((value) => value.trim()?.replace(/ +(?= )/g, ""));
+        column = column?.map((value) => value.trim()?.replace(/ +(?= )/g, ""));
 
         generatedRows = realRows.map((list) => {
           return list
@@ -287,7 +287,7 @@ const processDisputeData = async (day, type) => {
           }
         });
 
-        column = column.map((value) => value.trim()?.replace(/ +(?= )/g, ""));
+        column = column?.map((value) => value.trim()?.replace(/ +(?= )/g, ""));
 
         generatedRows = realRows.map((list) => {
           return list
@@ -448,32 +448,32 @@ const Main = async () => {
         await processNormalData(index, "ACQ");
         await processDisputeData(index, "ACQ");
 
-        await processNormalData(index, "ISS");
-        await processDisputeData(index, "ISS");
+        // await processNormalData(index, "ISS");
+        // await processDisputeData(index, "ISS");
       }
 
       setTimeout(async () => {
-        var wb = xlsx.utils.book_new();
+        let wb = xlsx.utils.book_new();
 
-        var ws_acq_normal = null;
-        var ws_acq_dispute = null;
-        var ws_iss_normal = null;
-        var ws_iss_dispute = null;
+        let ws_acq_normal = null;
+        let ws_acq_dispute = null;
+        let ws_iss_normal = null;
+        let ws_iss_dispute = null;
 
         if (trx?.acq?.normal?.length) {
-          var ws_acq_normal = xlsx.utils.json_to_sheet(trx?.acq?.normal);
+          ws_acq_normal = xlsx.utils.json_to_sheet(trx?.acq?.normal);
         }
 
         if (trx?.acq?.dispute?.length) {
-          var ws_acq_dispute = xlsx.utils.json_to_sheet(trx?.acq?.dispute);
+          ws_acq_dispute = xlsx.utils.json_to_sheet(trx?.acq?.dispute);
         }
 
         if (trx?.iss?.normal?.length) {
-          var ws_iss_normal = xlsx.utils.json_to_sheet(trx?.iss?.normal);
+          ws_iss_normal = xlsx.utils.json_to_sheet(trx?.iss?.normal);
         }
 
         if (trx?.iss?.dispute?.length) {
-          var ws_iss_dispute = xlsx.utils.json_to_sheet(trx?.iss?.dispute);
+          ws_iss_dispute = xlsx.utils.json_to_sheet(trx?.iss?.dispute);
         }
 
         if (ws_acq_normal !== null) {
