@@ -50,15 +50,15 @@ const mappingNormalColumns = (row, object) => {
 
   row?.map((a) => a?.split(" ")?.map((b) => store.push(b)));
 
-  if (store[6]?.indexOf("93600") !== -1) {
+  if (store[6]?.indexOf("9360") !== -1) {
     store.splice(6, 0, "");
   }
 
-  if (store[7]?.indexOf("93600") !== -1 && store[7]?.length <= 8) {
+  if (store[7]?.indexOf("9360") !== -1 && store[7]?.length <= 8) {
     store.splice(7, 0, "");
   }
 
-  if (store[10]?.indexOf("93600") === -1) {
+  if (store[10]?.indexOf("9360") === -1) {
     store.splice(10, 0, "");
   }
 

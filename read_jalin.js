@@ -4,11 +4,7 @@ const xlsx = require("xlsx");
 const readline = require("readline");
 const moment = require("moment");
 const {
-  formatRowNumber,
-  formatTrxCode,
-  formatTrxDate,
   mappingNormalColumns,
-  reMappingNormalColumns,
   mappingDisputeColumns,
 } = require("./helpers/format");
 
@@ -84,7 +80,7 @@ fs.readdir(dir, (err, files) => {
 
     const filename = `download/jalin_${moment().format("YYMMDD")}.xlsx`;
 
-    await xlsx.writeFile(wb, filename);
+    await xlsx.writeFile(wb, filename, { compression: true });
   }, 5000);
 });
 
@@ -151,13 +147,11 @@ const processNormalNew = async (file, type) => {
         if (item !== null) {
           mappingNormalColumns(item, object);
 
+          object["Nominal"] = parseFloat(object?.Nominal.replace(/,/g, ""));
           object[
             "Jalin_Unique_Code"
           ] = `${object["Ref_No"]}_${object["Customer_PAN"]}_${object["Nominal"]}`;
-
           object["Report_Date"] = file?.split("_")[4];
-
-          //   let secondPhase = reMappingNormalColumns(firstPhase);
 
           data.push(object);
         }
@@ -242,6 +236,7 @@ const processDisputeNew = async (file, type) => {
 
           mappingDisputeColumns(item, object);
 
+          object["Nominal"] = parseFloat(object?.Nominal.replace(/,/g, ""));
           object[
             "Jalin_Unique_Code"
           ] = `${object["Ref_No"]}_${object["Customer_PAN"]}_${object["Nominal"]}`;
